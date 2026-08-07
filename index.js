@@ -2,14 +2,13 @@
     'use strict';
 
     // ==========================================
-    // 1. CSS 동적 주입 (모바일 롱프레스 방어막 및 중복 방지 추가)
+    // 1. CSS 동적 주입 (모바일 롱프레스 방어막 및 중복 방지)
     // ==========================================
     (function injectStyle() {
-        // 클로드가 추천한 중복 방지 코드 추가
         if (document.getElementById('jkg-custom-style')) return; 
 
         const style = document.createElement('style');
-        style.id = 'jkg-custom-style'; // 나중에 관리하기 쉽도록 ID 부여
+        style.id = 'jkg-custom-style'; 
         style.textContent = `
             #send_but {
                 -webkit-touch-callout: none;
@@ -27,7 +26,7 @@
     const INJECT_COMMAND =
         '/inject id=Kpgg position=chat depth=0 scan=true ephemeral=true (OOC: Keep Going) | /trigger';
     const STORAGE_KEY = 'JustKeepGoing_enabled';
-    const LONG_PRESS_MS = 600; // 600ms(0.6초) 권장
+    const LONG_PRESS_MS = 600; 
 
     let enabled = loadEnabled();
 
@@ -60,7 +59,7 @@
     }
 
     // ==========================================
-    // 3. 토글 버블 (UI) 로직
+    // 3. 토글 버블 (UI) 로직 - 동적 위치 보정 적용
     // ==========================================
     let bubbleEl = null;
     let longPressTimer = null;
@@ -84,13 +83,17 @@
         removeBubble();
 
         const rect = sendBtn.getBoundingClientRect();
+        const buttonCenterX = rect.left + rect.width / 2;
+        const MARGIN = 8; // 화면 가장자리와의 최소 여백
+
         bubbleEl = document.createElement('div');
         bubbleEl.className = 'jkg-toggle-bubble';
+        
+        // visibility: hidden으로 실제 위치 계산 전까지 숨김 처리
         bubbleEl.style.cssText = `
             position: fixed;
-            left: ${rect.left + rect.width / 2}px;
             top: ${rect.top}px;
-            transform: translate(-50%, -100%) translateY(-8px);
+            transform: translateY(-100%) translateY(-8px);
             background: var(--SmartThemeBlurTintColor, #2b2b2b);
             color: var(--SmartThemeBodyColor, #ffffff);
             border: 1px solid var(--SmartThemeQuoteColor, #555555);
@@ -103,6 +106,8 @@
             box-shadow: 0 4px 12px rgba(0,0,0,0.4);
             z-index: 100000;
             white-space: nowrap;
+            visibility: hidden; 
+            left: 0px;
         `;
 
         const label = document.createElement('span');
@@ -135,16 +140,31 @@
         arrow.style.cssText = `
             position: absolute;
             bottom: -6px;
-            left: 50%;
-            transform: translateX(-50%) rotate(45deg);
             width: 10px;
             height: 10px;
             background: var(--SmartThemeBlurTintColor, #2b2b2b);
             border-bottom: 1px solid var(--SmartThemeQuoteColor, #555555);
             border-right: 1px solid var(--SmartThemeQuoteColor, #555555);
+            transform: rotate(45deg);
         `;
         bubbleEl.appendChild(arrow);
+
         document.body.appendChild(bubbleEl);
+
+        // ---- 실제 렌더된 너비를 기준으로 위치 보정 ----
+        const bubbleWidth = bubbleEl.getBoundingClientRect().width;
+        let left = buttonCenterX - bubbleWidth / 2; // 버튼 중앙 기준 이상적인 위치
+        const maxLeft = window.innerWidth - bubbleWidth - MARGIN;
+        left = Math.max(MARGIN, Math.min(left, maxLeft)); // 화면 밖으로 안 나가게 보정
+
+        bubbleEl.style.left = `${left}px`;
+        bubbleEl.style.visibility = 'visible';
+
+        // 화살표는 버블이 밀렸어도 항상 버튼 중앙을 가리키도록 위치 재계산
+        const arrowLeft = buttonCenterX - left;
+        const clampedArrowLeft = Math.max(12, Math.min(arrowLeft, bubbleWidth - 12)); // 화살표가 모서리를 벗어나지 않게 보정
+        arrow.style.left = `${clampedArrowLeft}px`;
+        arrow.style.transform = 'translateX(-50%) rotate(45deg)';
 
         setTimeout(() => {
             document.addEventListener('click', outsideClickHandler, true);
