@@ -170,7 +170,7 @@
             e.stopPropagation();
             saveEnabled(!enabled);
             toggle.textContent = enabled ? ON_TEXT : OFF_TEXT;
-            toggle.style.background = enabled ? '#FFB6C1' : '#9e9e9e';
+            toggle.style.background = enabled ? '#FFD1DC' : '#E0E0E0';
         });
         bubbleEl.appendChild(toggle);
 
