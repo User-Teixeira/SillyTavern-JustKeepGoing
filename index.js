@@ -88,7 +88,7 @@
 
         bubbleEl = document.createElement('div');
         bubbleEl.className = 'jkg-toggle-bubble';
-        
+
         // visibility: hidden으로 실제 위치 계산 전까지 숨김 처리
         bubbleEl.style.cssText = `
             position: fixed;
@@ -96,13 +96,14 @@
             transform: translateY(-100%) translateY(-8px);
             background: var(--SmartThemeBlurTintColor, #2b2b2b);
             color: var(--SmartThemeBodyColor, #ffffff);
-            border: 1px solid var(--SmartThemeQuoteColor, #555555);
-            border-radius: 8px;
-            padding: 8px 10px;
+            border: 1px solid var(--SmartThemeBorderColor, #555555);
+            border-radius: 5px;
+            padding: 10px 10px;
             font-size: 12px;
             display: flex;
+            flex-direction: column;
             align-items: center;
-            gap: 8px;
+            gap: 6px;
             box-shadow: 0 4px 12px rgba(0,0,0,0.4);
             z-index: 100000;
             white-space: nowrap;
@@ -110,29 +111,66 @@
             left: 0px;
         `;
 
-        const label = document.createElement('span');
-        label.textContent = 'Just Keep Going';
+        // 라벨: JUST / KEEP / GOING 세 줄로 세로 배치
+        const label = document.createElement('div');
+        label.style.cssText = `
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            line-height: 1.15;
+            font-weight: bold;
+            letter-spacing: 0.5px;
+            color: var(--SmartThemeBodyColor, #ffffff);
+            font-size: calc(var(--mainFontSize) * 0.9);
+        `;
+        ['JUST', 'KEEP', 'GOING'].forEach((word) => {
+            const line = document.createElement('span');
+            line.textContent = word;
+            label.appendChild(line);
+        });
         bubbleEl.appendChild(label);
+
+        const OFF_TEXT = 'Zz..( ᵕ༚ᵕ )';
+        const ON_TEXT = "ദ്ദി ( 'ᢦ' )";
+        const TOGGLE_FONT_SIZE = 'calc(var(--mainFontSize) * 1)';
+        const TOGGLE_FONT_WEIGHT = 'normal';
+
+        // 이 기기/브라우저의 실제 폰트 렌더링 기준으로 두 텍스트 중 더 넓은 쪽을 측정
+        const toggleTextWidth = Math.max(
+            measureTextWidth(OFF_TEXT, TOGGLE_FONT_SIZE, TOGGLE_FONT_WEIGHT),
+            measureTextWidth(ON_TEXT, TOGGLE_FONT_SIZE, TOGGLE_FONT_WEIGHT),
+        );
+        const TOGGLE_H_PADDING = 10; // padding: 3px 10px 의 좌우값과 동일하게 유지
+        const toggleMinWidth = Math.ceil(toggleTextWidth) + TOGGLE_H_PADDING * 2;
 
         const toggle = document.createElement('button');
         toggle.type = 'button';
-        toggle.textContent = enabled ? 'ON' : 'OFF';
+        toggle.textContent = enabled ? ON_TEXT : OFF_TEXT;
         toggle.style.cssText = `
             border: none;
             border-radius: 6px;
-            padding: 3px 10px;
-            font-size: 11px;
-            font-weight: bold;
+            padding: 0 ${TOGGLE_H_PADDING}px;
+            font-size: ${TOGGLE_FONT_SIZE};
+            font-weight: ${TOGGLE_FONT_WEIGHT};
             cursor: pointer;
-            color: #ffffff;
-            background: ${enabled ? '#4caf50' : '#9e9e9e'};
+            color: #000000;
+            background: ${enabled ? '#FFB6C1' : '#9e9e9e'};
+            min-width: ${toggleMinWidth}px;
+            height: 24px;
+            line-height: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            box-sizing: border-box;
+            text-align: center;
         `;
         toggle.addEventListener('click', (e) => {
             e.preventDefault();
             e.stopPropagation();
             saveEnabled(!enabled);
-            toggle.textContent = enabled ? 'ON' : 'OFF';
-            toggle.style.background = enabled ? '#4caf50' : '#9e9e9e';
+            toggle.textContent = enabled ? ON_TEXT : OFF_TEXT;
+            toggle.style.background = enabled ? '#FFB6C1' : '#9e9e9e';
         });
         bubbleEl.appendChild(toggle);
 
@@ -143,8 +181,8 @@
             width: 10px;
             height: 10px;
             background: var(--SmartThemeBlurTintColor, #2b2b2b);
-            border-bottom: 1px solid var(--SmartThemeQuoteColor, #555555);
-            border-right: 1px solid var(--SmartThemeQuoteColor, #555555);
+            border-bottom: 1px solid var(--SmartThemeBorderColor, #555555);
+            border-right: 1px solid var(--SmartThemeBorderColor, #555555);
             transform: rotate(45deg);
         `;
         bubbleEl.appendChild(arrow);
@@ -171,6 +209,25 @@
         }, 0);
     }
 
+    // 주어진 텍스트가 현재 폰트 환경에서 실제로 렌더링되는 너비를 측정
+    function measureTextWidth(text, fontSize, fontWeight) {
+        const span = document.createElement('span');
+        span.style.cssText = `
+            position: fixed;
+            top: -9999px;
+            left: -9999px;
+            visibility: hidden;
+            white-space: nowrap;
+            font-size: ${fontSize};
+            font-weight: ${fontWeight};
+        `;
+        span.textContent = text;
+        document.body.appendChild(span);
+        const width = span.getBoundingClientRect().width;
+        span.remove();
+        return width;
+    }
+
     function clearLongPressTimer() {
         if (longPressTimer) {
             clearTimeout(longPressTimer);
@@ -190,7 +247,7 @@
     function startLongPress(e) {
         const sendBtn = findSendBtn(e.target);
         if (!sendBtn) return;
-        
+
         // 마우스 우클릭인 경우 롱프레스 무시
         if (e.pointerType === 'mouse' && e.button !== 0) return;
 
