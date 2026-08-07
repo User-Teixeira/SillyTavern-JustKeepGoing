@@ -49,6 +49,23 @@
         return !ta || ta.value.trim() === '';
     }
 
+    // 마지막 채팅 메시지가 AI(캐릭터) 메시지인지 확인
+    // 마지막 메시지가 유저 메시지인 경우(혹은 채팅이 비어있는 경우) Keep Going을 발동하지 않기 위함
+    function isLastMessageFromAI() {
+        try {
+            const context = SillyTavern.getContext();
+            const chat = context.chat;
+            if (!chat || chat.length === 0) return false;
+            const lastMsg = chat[chat.length - 1];
+            if (!lastMsg) return false;
+            // is_user가 false면 AI(캐릭터) 메시지로 간주. system 메시지는 제외.
+            return lastMsg.is_user === false && !lastMsg.is_system;
+        } catch (err) {
+            console.error('[JustKeepGoing] Failed to check last message:', err);
+            return false;
+        }
+    }
+
     async function runKeepGoing() {
         try {
             const context = SillyTavern.getContext();
@@ -277,7 +294,7 @@
 
 
     // ==========================================
-    // 5. 빈 입력창일 때 Keep Going 실행
+    // 5. 빈 입력창일 때 + 마지막 메시지가 AI일 때만 Keep Going 실행
     // ==========================================
     document.addEventListener(
         'click',
@@ -292,7 +309,7 @@
                     return;
                 }
                 if (!enabled) return;
-                if (isInputEmpty()) {
+                if (isInputEmpty() && isLastMessageFromAI()) {
                     event.preventDefault();
                     event.stopImmediatePropagation();
                     event.stopPropagation();
@@ -310,7 +327,7 @@
             const ta = getTextarea();
             if (!ta || event.target !== ta) return;
             if (event.key === 'Enter' && !event.shiftKey) {
-                if (isInputEmpty()) {
+                if (isInputEmpty() && isLastMessageFromAI()) {
                     event.preventDefault();
                     event.stopImmediatePropagation();
                     event.stopPropagation();
