@@ -118,7 +118,6 @@
             flex-direction: column;
             align-items: center;
             line-height: 1.15;
-            font-weight: bold;
             letter-spacing: 0.5px;
             color: var(--SmartThemeBodyColor, #ffffff);
             font-size: calc(var(--mainFontSize) * 0.9);
@@ -154,7 +153,7 @@
             font-weight: ${TOGGLE_FONT_WEIGHT};
             cursor: pointer;
             color: #000000;
-            background: ${enabled ? '#FFB6C1' : '#9e9e9e'};
+            background: ${enabled ? '#FFD1DC' : '#E0E0E0'};
             min-width: ${toggleMinWidth}px;
             height: 24px;
             line-height: 1;
